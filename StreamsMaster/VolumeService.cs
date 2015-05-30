@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Vannatech.CoreAudio.Interfaces;
 
 namespace StreamsMaster
 {
@@ -16,7 +17,7 @@ namespace StreamsMaster
             deviceEnumerator.GetDefaultAudioEndpoint(EDataFlow.eRender, ERole.eMultimedia, out _speakers);
             Marshal.ReleaseComObject(deviceEnumerator);
         }
-        
+
         #region support
         [ComImport]
         [Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
@@ -79,7 +80,7 @@ namespace StreamsMaster
             int GetCount(out int SessionCount);
 
             [PreserveSig]
-            int GetSession(int SessionCount, out IAudioSessionControl Session);
+            int GetSession(int SessionCount, out IAudioSessionControl2 Session);
         }
 
         [Guid("F4B1A599-7266-4319-A8CA-E70ACB11E8CD"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -110,38 +111,37 @@ namespace StreamsMaster
         }
         #endregion
 
-        public void ControlApp(string app, int percentage)
+        //public void ControlApp(uint pid, int percentage)
+        //{
+        //    foreach (var otherPid in EnumerateApplications())
+        //    {
+        //        if (otherPid != pid) continue;
+        //        // display mute state & volume level (% of master)
+        //        Console.WriteLine("Mute:" + GetApplicationMute(app));
+        //        Console.WriteLine("Volume:" + GetApplicationVolume(app));
+
+        //        // mute the application
+        //        SetApplicationMute(app, true);
+
+        //        // set the volume to half of master volume (50%)
+        //        SetApplicationVolume(app, 50);
+        //    }
+        //}
+
+        public int? GetApplicationVolume(uint pid)
         {
-            foreach (var name in EnumerateApplications())
-            {
-                Console.WriteLine("name:" + name);
-                if (name != app) continue;
-                // display mute state & volume level (% of master)
-                Console.WriteLine("Mute:" + GetApplicationMute(app));
-                Console.WriteLine("Volume:" + GetApplicationVolume(app));
-
-                // mute the application
-                SetApplicationMute(app, true);
-
-                // set the volume to half of master volume (50%)
-                SetApplicationVolume(app, 50);
-            }
-        }
-
-        public float? GetApplicationVolume(string name)
-        {
-            var volume = GetVolumeObject(name);
+            var volume = GetVolumeObject(pid);
             if (volume == null)
                 return null;
 
             float level;
             volume.GetMasterVolume(out level);
-            return level * 100;
+            return Convert.ToInt32(level * 100);
         }
 
-        public bool? GetApplicationMute(string name)
+        public bool? GetApplicationMute(uint pid)
         {
-            var volume = GetVolumeObject(name);
+            var volume = GetVolumeObject(pid);
             if (volume == null)
                 return null;
 
@@ -150,19 +150,19 @@ namespace StreamsMaster
             return mute;
         }
 
-        public void SetApplicationVolume(string name, float level)
+        public void SetApplicationVolume(uint pid, int level)
         {
-            ISimpleAudioVolume volume = GetVolumeObject(name);
+            ISimpleAudioVolume volume = GetVolumeObject(pid);
             if (volume == null)
                 return;
 
             Guid guid = Guid.Empty;
-            volume.SetMasterVolume(level / 100, ref guid);
+            volume.SetMasterVolume((float)level / 100, ref guid);
         }
 
-        public void SetApplicationMute(string name, bool mute)
+        public void SetApplicationMute(uint pid, bool mute)
         {
-            ISimpleAudioVolume volume = GetVolumeObject(name);
+            ISimpleAudioVolume volume = GetVolumeObject(pid);
             if (volume == null)
                 return;
 
@@ -170,7 +170,7 @@ namespace StreamsMaster
             volume.SetMute(mute, ref guid);
         }
 
-        public IEnumerable<string> EnumerateApplications()
+        public IEnumerable<uint> EnumerateApplications()
         {
             // activate the session manager. we need the enumerator
             var IID_IAudioSessionManager2 = typeof(IAudioSessionManager2).GUID;
@@ -186,20 +186,20 @@ namespace StreamsMaster
 
             for (var i = 0; i < count; i++)
             {
-                IAudioSessionControl ctl;
+                IAudioSessionControl2 ctl;
                 sessionEnumerator.GetSession(i, out ctl);
-                string dn;
-                ctl.GetDisplayName(out dn);
-                yield return dn;
+                uint pid;
+                ctl.GetProcessId(out pid);
+                yield return pid;
                 Marshal.ReleaseComObject(ctl);
             }
             Marshal.ReleaseComObject(sessionEnumerator);
             Marshal.ReleaseComObject(mgr);
         }
 
-        private ISimpleAudioVolume GetVolumeObject(string name)
+        private ISimpleAudioVolume GetVolumeObject(uint pid)
         {
-           // activate the session manager. we need the enumerator
+            // activate the session manager. we need the enumerator
             var IID_IAudioSessionManager2 = typeof(IAudioSessionManager2).GUID;
             object o;
             _speakers.Activate(ref IID_IAudioSessionManager2, 0, IntPtr.Zero, out o);
@@ -216,11 +216,11 @@ namespace StreamsMaster
             ISimpleAudioVolume volumeControl = null;
             for (var i = 0; i < count; i++)
             {
-                IAudioSessionControl ctl;
+                IAudioSessionControl2 ctl;
                 sessionEnumerator.GetSession(i, out ctl);
-                string dn;
-                ctl.GetDisplayName(out dn);
-                if (string.Compare(name, dn, StringComparison.OrdinalIgnoreCase) == 0)
+                uint dn;
+                ctl.GetProcessId(out dn);
+                if (pid == dn)
                 {
                     volumeControl = ctl as ISimpleAudioVolume;
                     break;
@@ -234,22 +234,33 @@ namespace StreamsMaster
 
         public void MuteUnmuteAppVolume()
         {
-            var app = ProcessesService.GetActiveWindowTitle();
-            SetApplicationMute(app, !(GetApplicationMute(app) ?? false));
+            var pid = ProcessesService.GetActiveProcessID();
+            if (!pid.HasValue) return;
+            SetApplicationMute(pid.Value, !(GetApplicationMute(pid.Value) ?? false));
         }
-        
+
         public void RaiseAppVolume()
         {
+            var pid = ProcessesService.GetActiveProcessID();
+            if (!pid.HasValue) return;
+            var vol = GetApplicationVolume(pid.Value);
+            vol = Math.Min(100, vol.GetValueOrDefault(0) + 5);
+            SetApplicationVolume(pid.Value, vol.Value);
         }
 
         public void LowerAppVolume()
         {
+            var pid = ProcessesService.GetActiveProcessID();
+            if (!pid.HasValue) return;
+            var vol = GetApplicationVolume(pid.Value);
+            vol = Math.Max(0, vol.GetValueOrDefault(0) - 5);
+            SetApplicationVolume(pid.Value, vol.Value);
         }
 
         public void MuteUnmuteSystemVolume()
         {
 
-           //_speakers.AudioEndpointVolume.VolumeStepUp();
+            //_speakers.AudioEndpointVolume.VolumeStepUp();
         }
 
         public void RaiseSystemVolume()

@@ -72,6 +72,12 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\netcoreaudio-master\CoreAudio\CoreAudio.csproj">
+      <Project>{2222E8D7-6130-4B46-9749-474E3FE2891B}</Project>
+      <Name>CoreAudio</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

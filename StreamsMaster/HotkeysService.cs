@@ -54,31 +54,32 @@ namespace StreamsMaster
 
         private void RegisterHotkey(Keys key, HandledEventHandler pressedWithCtrl, HandledEventHandler pressedAlone, Form placeholder)
         {
-            var normalHotkey = new Hotkey
-            {
-                KeyCode = key,
-                Control = false
-            };
-            normalHotkey.Pressed += pressedAlone; //delegate { Console.WriteLine("Windows+1 pressed!"); };
+            //var normalHotkey = new Hotkey
+            //{
+            //    KeyCode = key,
+            //    Control = false
+            //};
+            //normalHotkey.Pressed += pressedAlone;
 
             var withCtrlHotkey = new Hotkey
             {
                 KeyCode = key,
                 Control = true
             };
-            withCtrlHotkey.Pressed += pressedWithCtrl; //delegate { Console.WriteLine("Windows+1 pressed!"); };
+            withCtrlHotkey.Pressed += pressedWithCtrl;
 
-            if (!normalHotkey.GetCanRegister(placeholder) || !withCtrlHotkey.GetCanRegister(placeholder))
+            //if (!normalHotkey.GetCanRegister(placeholder) || !withCtrlHotkey.GetCanRegister(placeholder))
+            if (!withCtrlHotkey.GetCanRegister(placeholder))
             {
                 //TODO Send error    
                 Console.WriteLine(
                         "Whoops, looks like attempts to register will fail or throw an exception, show an error/visual user feedback");
                 return;
             }
-            normalHotkey.Register(placeholder);
+            //normalHotkey.Register(placeholder);
             withCtrlHotkey.Register(placeholder);
 
-            _registeredHotkeys.Add(normalHotkey);
+            //_registeredHotkeys.Add(normalHotkey);
             _registeredHotkeys.Add(withCtrlHotkey);
         }
 

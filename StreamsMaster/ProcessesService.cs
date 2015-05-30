@@ -18,11 +18,11 @@ namespace StreamsMaster
         [DllImport("user32.dll")]
         private static extern Int32 GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
-        public static String GetActiveWindowTitle()
+        public static uint? GetActiveProcessID()
         {
             var currentProcess = GetActiveProcess();
             if (currentProcess != null)
-                return currentProcess.ProcessName;
+                return Convert.ToUInt32(currentProcess.Id);
             return null;
         }
 
