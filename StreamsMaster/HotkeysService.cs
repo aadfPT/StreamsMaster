@@ -1,41 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 
 namespace StreamsMaster
 {
-    class HotkeysService
+    class HotkeysService : IDisposable
     {
-        
-        //private KeyboardHook hook;
-
-        //private bool enabled = true;
-
-        //private bool Hook_KeyIntercepted(KeyboardHook.KeyboardHookEventArgs e)
-        //{
-        //    if (!enabled) return true;
-        //    if (!e.KeyName.Contains("Volume")) return true;
-
-
-        //    //Thanks! https://stackoverflow.com/questions/2534595/get-master-sound-volume-in-c-sharp
-        //    VolumeService.MMDeviceEnumerator devEnum = new VolumeService.MMDeviceEnumerator();
-        //    MMDevice defaultDevice = devEnum.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-        //    switch (e.KeyName)
-        //    {
-        //        case "VolumeUp":
-        //            defaultDevice.AudioEndpointVolume.VolumeStepUp();
-        //            break;
-        //        case "VolumeDown":
-        //            defaultDevice.AudioEndpointVolume.VolumeStepDown();
-        //            break;
-        //        case "VolumeMute":
-        //            defaultDevice.AudioEndpointVolume.Mute = !defaultDevice.AudioEndpointVolume.Mute;
-        //            break;
-        //        case "MediaNextTrack":
-        //            break;
-        //    }
-        //    return false;
-        //}
+        private List<Hotkey> _registeredHotkeys = new List<Hotkey>();
+        private VolumeService _volumeService = new VolumeService();
 
         public void RegisterHotkeys(Form placeholder)
         {
@@ -47,35 +22,37 @@ namespace StreamsMaster
 
         private void MuteUnmuteSystemVolume(object sender, HandledEventArgs e)
         {
-            throw new NotImplementedException();
+            _volumeService.MuteUnmuteSystemVolume();
         }
 
         private void RaiseSystemVolume(object sender, HandledEventArgs e)
         {
-            throw new NotImplementedException();
+            _volumeService.RaiseSystemVolume();
+
         }
 
         private void LowerSystemVolume(object sender, HandledEventArgs e)
         {
-            throw new NotImplementedException();
+            _volumeService.LowerSystemVolume();
+
         }
 
         private void MuteUnmuteAppVolume(object sender, HandledEventArgs e)
         {
-            throw new NotImplementedException();
+            _volumeService.MuteUnmuteAppVolume();
         }
 
         private void RaiseAppVolume(object sender, HandledEventArgs e)
         {
-            throw new NotImplementedException();
+            _volumeService.RaiseAppVolume();
         }
 
         private void LowerAppVolume(object sender, HandledEventArgs e)
         {
-            throw new NotImplementedException();
+            _volumeService.LowerAppVolume();
         }
 
-        private static void RegisterHotkey(Keys key, HandledEventHandler pressedWithCtrl, HandledEventHandler pressedAlone, Form placeholder)
+        private void RegisterHotkey(Keys key, HandledEventHandler pressedWithCtrl, HandledEventHandler pressedAlone, Form placeholder)
         {
             var normalHotkey = new Hotkey
             {
@@ -92,18 +69,25 @@ namespace StreamsMaster
             withCtrlHotkey.Pressed += pressedWithCtrl; //delegate { Console.WriteLine("Windows+1 pressed!"); };
 
             if (!normalHotkey.GetCanRegister(placeholder) || !withCtrlHotkey.GetCanRegister(placeholder))
-                {
-                    Console.WriteLine(
+            {
+                //TODO Send error    
+                Console.WriteLine(
                         "Whoops, looks like attempts to register will fail or throw an exception, show an error/visual user feedback");
-                }
-                else
-                {
-                    normalHotkey.Register(placeholder);
-                    withCtrlHotkey.Register(placeholder);
-                }
-            //// .. later, at some point
-            //if (hk.Registered)
-            //{ hk.Unregister(); }
+                return;
+            }
+            normalHotkey.Register(placeholder);
+            withCtrlHotkey.Register(placeholder);
+
+            _registeredHotkeys.Add(normalHotkey);
+            _registeredHotkeys.Add(withCtrlHotkey);
+        }
+
+        public void Dispose()
+        {
+            foreach (var hk in _registeredHotkeys.Where(hk => hk.Registered))
+            {
+                hk.Unregister();
+            }
         }
     }
 }

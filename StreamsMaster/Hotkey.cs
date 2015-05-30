@@ -180,8 +180,7 @@ namespace StreamsMaster
                 // Fire the event and pass on the event if our handlers didn't handle it
                 return this.OnPressed();
             }
-            else
-            { return false; }
+            return false;
         }
 
         private bool OnPressed()
