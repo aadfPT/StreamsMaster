@@ -14,18 +14,20 @@ namespace StreamsMaster
     }
     class StreamsMaster
     {
-        private readonly HotkeysService _hotkeysService = new HotkeysService();
 
         public void Run() //string[] args)
         {
-            //const string app = "Mozilla Firefox";
-
-            //VolumeService.ControlApp(app, 50);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            var mainForm = new Form1();
-            _hotkeysService.RegisterHotkeys(mainForm);
-            Application.Run(mainForm);
+
+            using (var mainForm = new Form1())
+            using (var hotkeysService = new HotkeysService())
+            using (var pi = new ProcessIcon())
+            {
+                pi.Display();
+                hotkeysService.RegisterHotkeys(mainForm);
+                Application.Run();
+            }
         }
     }
 }
