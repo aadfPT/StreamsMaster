@@ -81,22 +81,22 @@ namespace StreamsMaster.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Explorer {
-            get {
-                object obj = ResourceManager.GetObject("Explorer", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon SystemTrayApp {
             get {
                 object obj = ResourceManager.GetObject("SystemTrayApp", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap volume_icon {
+            get {
+                object obj = ResourceManager.GetObject("volume_icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

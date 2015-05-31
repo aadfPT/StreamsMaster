@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("StreamsMaster")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Streams Master")]
+[assembly: AssemblyDescription("Developed by André Ferreira.\r\n\r\nUsing code from  Karel Čapek, Max Bolingbroke and  Richard Carr.\r\nReferencing the CoreAudio library.\r\nIcon by 'http://www.elegantthemes.com'.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("StreamsMaster")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyProduct("Streams Master")]
+[assembly: AssemblyCopyright("Published under the GNU General Public License v3.0")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

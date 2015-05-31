@@ -40,7 +40,7 @@ namespace SystemTrayApp
 			item = new ToolStripMenuItem();
 			item.Text = "About";
 			item.Click += new EventHandler(About_Click);
-			item.Image = Resources.About;
+			//item.Image = Resources.About;
 			menu.Items.Add(item);
 
 			// Separator.
@@ -51,7 +51,7 @@ namespace SystemTrayApp
 			item = new ToolStripMenuItem();
 			item.Text = "Exit";
 			item.Click += new System.EventHandler(Exit_Click);
-			item.Image = Resources.Exit;
+			//item.Image = Resources.Exit;
 			menu.Items.Add(item);
 
 			return menu;
