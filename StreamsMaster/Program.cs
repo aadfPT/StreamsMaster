@@ -19,15 +19,16 @@ namespace StreamsMaster
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
-            using (var mainForm = new Form1())
-            using (var hotkeysService = new HotkeysService())
-            using (var pi = new ProcessIcon())
-            {
-                pi.Display();
-                hotkeysService.RegisterHotkeys(mainForm);
-                Application.Run();
-            }
+                using (var mainForm = new Form1())
+                using (var hotkeysService = new HotkeysService())
+                using (var pi = new ProcessIcon())
+                {
+                    pi.Display();
+                    hotkeysService.RegisterHotkeys(mainForm);
+                    var specialKeysService = new SpecialKeysService();
+                    specialKeysService.Register();
+                    Application.Run();
+                }
         }
     }
 }

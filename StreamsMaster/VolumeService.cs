@@ -9,12 +9,20 @@ namespace StreamsMaster
     class VolumeService
     {
         private IMMDevice _speakers;
+        private IAudioEndpointVolume _aepv;
 
         public VolumeService()
         {
             // get the speakers (1st render + multimedia) device
             var deviceEnumerator = (IMMDeviceEnumerator)(new MMDeviceEnumerator());
+
             deviceEnumerator.GetDefaultAudioEndpoint(EDataFlow.eRender, ERole.eMultimedia, out _speakers);
+
+            object o;
+            //retrieve the actual interface instance to retrieve the volume information from.
+            var guid = typeof(IAudioEndpointVolume).GUID;
+            _speakers.Activate(ref guid, 0, IntPtr.Zero, out o);
+            _aepv = (IAudioEndpointVolume)o;
             Marshal.ReleaseComObject(deviceEnumerator);
         }
 
@@ -259,17 +267,20 @@ namespace StreamsMaster
 
         public void MuteUnmuteSystemVolume()
         {
-
-            //_speakers.AudioEndpointVolume.VolumeStepUp();
+            bool muteState;
+            _aepv.GetMute(out muteState);
+            _aepv.SetMute(!muteState, new System.Guid());
         }
 
         public void RaiseSystemVolume()
         {
+            _aepv.VolumeStepUp(new System.Guid());
         }
 
         public void LowerSystemVolume()
         {
-        }
 
+            _aepv.VolumeStepDown(new System.Guid());
+        }
     }
 }
