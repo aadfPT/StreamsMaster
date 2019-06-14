@@ -25,8 +25,8 @@ namespace StreamsMaster
                 {
                     pi.Display();
                     hotkeysService.RegisterHotkeys(mainForm);
-                    var specialKeysService = new SpecialKeysService();
-                    specialKeysService.Register();
+                    //var specialKeysService = new SpecialKeysService();
+                    //specialKeysService.Register();
                     Application.Run();
                 }
         }
