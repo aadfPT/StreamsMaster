@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Gma.System.MouseKeyHook;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -11,22 +12,29 @@ namespace StreamsMaster
 {
     class HotkeysService : IDisposable
     {
-        private List<Hotkey> _registeredHotkeys = new List<Hotkey>();
         private VolumeService _volumeService = new VolumeService();
         internal InputSimulator Device { get; set; } = new InputSimulator();
 
-        public void RegisterHotkeys(Form placeholder)
+        public void RegisterHotkeys()
         {
-            RegisterHotkey(Keys.VolumeDown, LowerAppVolume, LowerSystemVolume, placeholder);
-            RegisterHotkey(Keys.VolumeUp, RaiseAppVolume, RaiseSystemVolume, placeholder);
-            RegisterHotkey(Keys.VolumeMute, MuteUnmuteAppVolume, MuteUnmuteSystemVolume, placeholder);
-            RegisterHotkey(Keys.Subtract, LowerAppVolume, LowerSystemVolume, placeholder);
-            RegisterHotkey(Keys.Add, RaiseAppVolume, RaiseSystemVolume, placeholder);
-            RegisterHotkey(Keys.Return, MuteUnmuteAppVolume, MuteUnmuteSystemVolume, placeholder); //NumPadEnter
-            //RegisterHotkey(Keys.Multiply, SendPlayPauseKey, null, placeholder);
-            //RegisterHotkey(Keys.Add, SendStopKey, null, placeholder);
-            //RegisterHotkey(Keys.Divide, SendPreviousTrackKey, null, placeholder);
-            //RegisterHotkey(Keys.Subtract, SendNextTrackKey, null, placeholder);
+            var normalReturn = Combination.TriggeredBy(Keys.Return).With(Keys.Decimal);
+            var ctrlnormalReturn = Combination.TriggeredBy(Keys.Return).With(Keys.Decimal).With(Keys.Control);
+            var normalAdd = Combination.TriggeredBy(Keys.Add);
+            var ctrlAdd = Combination.TriggeredBy(Keys.Add).With(Keys.Control);
+            var normalSubtract = Combination.TriggeredBy(Keys.Subtract);
+            var ctrlSubtract = Combination.TriggeredBy(Keys.Subtract).With(Keys.Control);
+
+            var assignment = new Dictionary<Combination, Action>
+            {
+                {normalReturn, MuteUnmuteSystemVolume},
+                {ctrlnormalReturn, MuteUnmuteAppVolume},
+                {normalAdd, RaiseSystemVolume},
+                {ctrlAdd, RaiseAppVolume},
+                {normalSubtract, LowerSystemVolume},
+                {ctrlSubtract, LowerAppVolume}
+            };
+
+            Hook.GlobalEvents().OnCombination(assignment);
         }
 
         private void SendPlayPauseKey(object sender, HandledEventArgs e)
@@ -45,84 +53,40 @@ namespace StreamsMaster
         {
             Device.Keyboard.KeyPress(VirtualKeyCode.MEDIA_PREV_TRACK);
         }
-        private void MuteUnmuteSystemVolume(object sender, HandledEventArgs e)
+        private void MuteUnmuteSystemVolume()
         {
             _volumeService.MuteUnmuteSystemVolume();
         }
 
-        private void RaiseSystemVolume(object sender, HandledEventArgs e)
+        private void RaiseSystemVolume()
         {
             _volumeService.RaiseSystemVolume();
 
         }
 
-        private void LowerSystemVolume(object sender, HandledEventArgs e)
+        private void LowerSystemVolume()
         {
             _volumeService.LowerSystemVolume();
 
         }
 
-        private void MuteUnmuteAppVolume(object sender, HandledEventArgs e)
+        private void MuteUnmuteAppVolume()
         {
             _volumeService.MuteUnmuteAppVolume();
         }
 
-        private void RaiseAppVolume(object sender, HandledEventArgs e)
+        private void RaiseAppVolume()
         {
             _volumeService.RaiseAppVolume();
         }
 
-        private void LowerAppVolume(object sender, HandledEventArgs e)
+        private void LowerAppVolume()
         {
             _volumeService.LowerAppVolume();
         }
 
-        private void RegisterHotkey(Keys key, HandledEventHandler pressedWithCtrl, HandledEventHandler pressedAlone, Form placeholder)
-        {
-            if (pressedWithCtrl != null)
-            {
-                var withCtrlHotkey = new Hotkey
-                {
-                    KeyCode = key,
-                    Control = true
-                };
-                withCtrlHotkey.Pressed += pressedWithCtrl;
-                if (!withCtrlHotkey.GetCanRegister(placeholder))
-                {
-                    //TODO Send error    
-                    Console.WriteLine(
-                                                    "Whoops, looks like attempts to register will fail or throw an exception, show an error/visual user feedback");
-                }
-                withCtrlHotkey.Register(placeholder);
-                _registeredHotkeys.Add(withCtrlHotkey);
-            }
-            if (pressedAlone != null)
-            {
-                var normalHotkey = new Hotkey
-                {
-                    KeyCode = key,
-                    Control = false,
-
-                };
-                normalHotkey.Pressed += pressedAlone;
-
-                if (!normalHotkey.GetCanRegister(placeholder))
-                {
-                    //TODO Send error    
-                    Console.WriteLine(
-                                                    "Whoops, looks like attempts to register will fail or throw an exception, show an error/visual user feedback");
-                }
-                normalHotkey.Register(placeholder);
-                _registeredHotkeys.Add(normalHotkey);
-            }
-        }
-
         public void Dispose()
         {
-            foreach (var hk in _registeredHotkeys.Where(hk => hk.Registered))
-            {
-                hk.Unregister();
-            }
         }
     }
 }

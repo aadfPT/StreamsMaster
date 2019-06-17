@@ -2,3 +2,5 @@
 obj
 /StreamsMaster/bin
 *.user
+/.vs
+/packages

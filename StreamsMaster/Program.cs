@@ -24,10 +24,8 @@ namespace StreamsMaster
                 using (var pi = new ProcessIcon())
                 {
                     pi.Display();
-                    hotkeysService.RegisterHotkeys(mainForm);
-                    //var specialKeysService = new SpecialKeysService();
-                    //specialKeysService.Register();
-                    Application.Run();
+                hotkeysService.RegisterHotkeys();
+                Application.Run();
                 }
         }
     }
