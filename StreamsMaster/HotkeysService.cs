@@ -13,43 +13,134 @@ namespace StreamsMaster
     class HotkeysService : IDisposable
     {
         private VolumeService _volumeService = new VolumeService();
+        private bool decimalIsDown;
+        private bool returnUsed;
+
         internal InputSimulator Device { get; set; } = new InputSimulator();
 
         public void RegisterHotkeys()
         {
-            var normalReturn = Combination.TriggeredBy(Keys.Return).With(Keys.Decimal);
-            var ctrlnormalReturn = Combination.TriggeredBy(Keys.Return).With(Keys.Decimal).With(Keys.Control);
-            var normalAdd = Combination.TriggeredBy(Keys.Add);
-            var ctrlAdd = Combination.TriggeredBy(Keys.Add).With(Keys.Control);
-            var normalSubtract = Combination.TriggeredBy(Keys.Subtract);
-            var ctrlSubtract = Combination.TriggeredBy(Keys.Subtract).With(Keys.Control);
-
-            var assignment = new Dictionary<Combination, Action>
+            Hook.GlobalEvents().KeyDown += (sender, e) =>
             {
-                {normalReturn, MuteUnmuteSystemVolume},
-                {ctrlnormalReturn, MuteUnmuteAppVolume},
-                {normalAdd, RaiseSystemVolume},
-                {ctrlAdd, RaiseAppVolume},
-                {normalSubtract, LowerSystemVolume},
-                {ctrlSubtract, LowerAppVolume}
+                switch (e.KeyCode)
+                {
+                    case Keys.Return:
+                        {
+
+
+                            if (!decimalIsDown) return;
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            returnUsed = true;
+                            if (e.Control)
+                            {
+                                MuteUnmuteAppVolume();
+                            }
+                            else
+                            {
+                                MuteUnmuteSystemVolume();
+                            }
+                            return;
+                        }
+                    case Keys.Decimal:
+                    case Keys.Delete:
+                        {
+                            decimalIsDown = true;
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            return;
+                        }
+                    case Keys.Subtract:
+                        {
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            if (e.Control)
+                            {
+                                LowerAppVolume();
+                            }
+                            else
+                            {
+                                LowerSystemVolume();
+                            }
+                            return;
+                        }
+                    case Keys.Add:
+                        {
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            if (e.Control)
+                            {
+                                RaiseAppVolume();
+                            }
+                            else
+                            {
+                                RaiseSystemVolume();
+                            }
+                            return;
+                        }
+                    case Keys.Right:
+                        {
+                            if (!e.Control) return;
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            SendNextTrackKey();
+                            return;
+                        }
+                    case Keys.Left:
+                        {
+                            if (!e.Control) return;
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            SendPreviousTrackKey();
+                            return;
+                        }
+                    case Keys.Down:
+                        {
+                            if (!e.Control) return;
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            SendPlayPauseKey();
+                            return;
+                        }
+                };
             };
 
-            Hook.GlobalEvents().OnCombination(assignment);
+            Hook.GlobalEvents().KeyUp += (sender, e) =>
+            {
+                switch (e.KeyCode)
+                {
+                    case Keys.Decimal:
+                    case Keys.Delete:
+                        {
+
+                            decimalIsDown = false;
+                            if (returnUsed)
+                            {
+                                returnUsed = false;
+                                e.Handled = true;
+                                e.SuppressKeyPress = true;
+                                return;
+                            }
+                            Device.Keyboard.KeyPress((VirtualKeyCode)e.KeyCode);
+                            return;
+                        }
+                }
+            };
         }
 
-        private void SendPlayPauseKey(object sender, HandledEventArgs e)
+        private void SendPlayPauseKey()
         {
             Device.Keyboard.KeyPress(VirtualKeyCode.MEDIA_PLAY_PAUSE);
         }
-        private void SendStopKey(object sender, HandledEventArgs e)
+        private void SendStopKey()
         {
             Device.Keyboard.KeyPress(VirtualKeyCode.MEDIA_STOP);
         }
-        private void SendNextTrackKey(object sender, HandledEventArgs e)
+        private void SendNextTrackKey()
         {
             Device.Keyboard.KeyPress(VirtualKeyCode.MEDIA_NEXT_TRACK);
         }
-        private void SendPreviousTrackKey(object sender, HandledEventArgs e)
+        private void SendPreviousTrackKey()
         {
             Device.Keyboard.KeyPress(VirtualKeyCode.MEDIA_PREV_TRACK);
         }
