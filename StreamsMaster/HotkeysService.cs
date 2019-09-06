@@ -14,6 +14,7 @@ namespace StreamsMaster
     {
         private VolumeService _volumeService = new VolumeService();
         private bool decimalIsDown;
+        private bool decimalIsUnused;
         private bool returnUsed;
 
         internal InputSimulator Device { get; set; } = new InputSimulator();
@@ -22,16 +23,19 @@ namespace StreamsMaster
         {
             Hook.GlobalEvents().KeyDown += (sender, e) =>
             {
+                if (e.KeyCode == Keys.Decimal)
+                {
+                    decimalIsDown = true;
+                    decimalIsUnused = true;
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+                if (!decimalIsDown) return;
                 switch (e.KeyCode)
                 {
                     case Keys.Return:
                         {
-
-
-                            if (!decimalIsDown) return;
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
-                            returnUsed = true;
                             if (e.Control)
                             {
                                 MuteUnmuteAppVolume();
@@ -40,20 +44,10 @@ namespace StreamsMaster
                             {
                                 MuteUnmuteSystemVolume();
                             }
-                            return;
-                        }
-                    case Keys.Decimal:
-                    case Keys.Delete:
-                        {
-                            decimalIsDown = true;
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
-                            return;
+                            break;
                         }
                     case Keys.Subtract:
                         {
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
                             if (e.Control)
                             {
                                 LowerAppVolume();
@@ -62,12 +56,10 @@ namespace StreamsMaster
                             {
                                 LowerSystemVolume();
                             }
-                            return;
+                            break;
                         }
                     case Keys.Add:
                         {
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
                             if (e.Control)
                             {
                                 RaiseAppVolume();
@@ -76,56 +68,53 @@ namespace StreamsMaster
                             {
                                 RaiseSystemVolume();
                             }
-                            return;
+                            break;
                         }
                     case Keys.Right:
                         {
-                            if (!e.Control) return;
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
                             SendNextTrackKey();
-                            return;
+                            break;
                         }
                     case Keys.Left:
                         {
-                            if (!e.Control) return;
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
                             SendPreviousTrackKey();
-                            return;
+                            break;
                         }
                     case Keys.Down:
                         {
-                            if (!e.Control) return;
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
                             SendPlayPauseKey();
-                            return;
+                            break;
                         }
-                };
-            };
-
-            Hook.GlobalEvents().KeyUp += (sender, e) =>
-            {
-                switch (e.KeyCode)
-                {
-                    case Keys.Decimal:
-                    case Keys.Delete:
+                    default:
                         {
-
-                            decimalIsDown = false;
-                            if (returnUsed)
-                            {
-                                returnUsed = false;
-                                e.Handled = true;
-                                e.SuppressKeyPress = true;
-                                return;
-                            }
-                            Device.Keyboard.KeyPress((VirtualKeyCode)e.KeyCode);
                             return;
                         }
                 }
+
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                decimalIsUnused = false;
             };
+
+            Hook.GlobalEvents().KeyUp += (sender, e) =>
+                {
+                    switch (e.KeyCode)
+                    {
+                        case Keys.Decimal:
+                        case Keys.Delete:
+                            {
+
+                                decimalIsDown = false;
+                                if (!decimalIsUnused)
+                                {
+                                    e.Handled = true;
+                                    e.SuppressKeyPress = true;
+                                    return;
+                                }
+                                break;
+                            }
+                    }
+                };
         }
 
         private void SendPlayPauseKey()
