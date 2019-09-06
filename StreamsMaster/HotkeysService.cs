@@ -12,10 +12,11 @@ namespace StreamsMaster
 {
     class HotkeysService : IDisposable
     {
-        private VolumeService _volumeService = new VolumeService();
+        private readonly VolumeService _volumeService = new VolumeService();
+
         private bool decimalIsDown;
+
         private bool decimalIsUnused;
-        private bool returnUsed;
 
         internal InputSimulator Device { get; set; } = new InputSimulator();
 
@@ -27,8 +28,8 @@ namespace StreamsMaster
                 {
                     decimalIsDown = true;
                     decimalIsUnused = true;
-                    e.Handled = true;
                     e.SuppressKeyPress = true;
+                    e.Handled = true;
                     return;
                 }
                 if (!decimalIsDown) return;
@@ -36,38 +37,17 @@ namespace StreamsMaster
                 {
                     case Keys.Return:
                         {
-                            if (e.Control)
-                            {
-                                MuteUnmuteAppVolume();
-                            }
-                            else
-                            {
-                                MuteUnmuteSystemVolume();
-                            }
+                            ExecuteDependingOnControlKey(e.Control, MuteUnmuteAppVolume, MuteUnmuteSystemVolume);
                             break;
                         }
                     case Keys.Subtract:
                         {
-                            if (e.Control)
-                            {
-                                LowerAppVolume();
-                            }
-                            else
-                            {
-                                LowerSystemVolume();
-                            }
+                            ExecuteDependingOnControlKey(e.Control, LowerAppVolume, LowerSystemVolume);
                             break;
                         }
                     case Keys.Add:
                         {
-                            if (e.Control)
-                            {
-                                RaiseAppVolume();
-                            }
-                            else
-                            {
-                                RaiseSystemVolume();
-                            }
+                            ExecuteDependingOnControlKey(e.Control, RaiseAppVolume, RaiseSystemVolume);
                             break;
                         }
                     case Keys.Right:
@@ -115,6 +95,18 @@ namespace StreamsMaster
                             }
                     }
                 };
+        }
+
+        private void ExecuteDependingOnControlKey(bool controlIsActive, Action actionWithControl, Action actionWithoutControl)
+        {
+            if (controlIsActive)
+            {
+                actionWithControl();
+            }
+            else
+            {
+                actionWithoutControl();
+            }
         }
 
         private void SendPlayPauseKey()
