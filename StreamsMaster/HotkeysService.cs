@@ -14,87 +14,51 @@ namespace StreamsMaster
     {
         private readonly VolumeService _volumeService = new VolumeService();
 
-        private bool decimalIsDown;
-
-        private bool decimalIsUnused;
-
         internal InputSimulator Device { get; set; } = new InputSimulator();
 
         public void RegisterHotkeys()
         {
             Hook.GlobalEvents().KeyDown += (sender, e) =>
             {
-                if (e.KeyCode == Keys.Decimal)
+                if (e.KeyCode == Keys.PageUp 
+                    || e.KeyCode == Keys.PageDown
+                    || e.KeyCode == Keys.End)
                 {
-                    decimalIsDown = true;
-                    decimalIsUnused = true;
                     e.SuppressKeyPress = true;
-                    e.Handled = true;
+                }
+            };
+            Hook.GlobalEvents().KeyUp += (sender, e) =>
+            {
+                if (e.KeyCode != Keys.PageUp 
+                    && e.KeyCode != Keys.PageDown
+                    &&e.KeyCode != Keys.End)
+                {
                     return;
                 }
-                if (!decimalIsDown) return;
+
+                e.SuppressKeyPress = true;
                 switch (e.KeyCode)
                 {
-                    case Keys.Return:
-                        {
-                            ExecuteDependingOnControlKey(e.Control, MuteUnmuteAppVolume, MuteUnmuteSystemVolume);
-                            break;
-                        }
-                    case Keys.Subtract:
-                        {
-                            ExecuteDependingOnControlKey(e.Control, LowerAppVolume, LowerSystemVolume);
-                            break;
-                        }
-                    case Keys.Add:
-                        {
-                            ExecuteDependingOnControlKey(e.Control, RaiseAppVolume, RaiseSystemVolume);
-                            break;
-                        }
-                    case Keys.Right:
-                        {
-                            SendNextTrackKey();
-                            break;
-                        }
-                    case Keys.Left:
-                        {
-                            SendPreviousTrackKey();
-                            break;
-                        }
-                    case Keys.Down:
-                        {
-                            SendPlayPauseKey();
-                            break;
-                        }
-                    default:
-                        {
-                            return;
-                        }
+                    case Keys.End when e.Control:
+                        MuteUnmuteAppVolume();
+                        return;
+                    case Keys.End:
+                        MuteUnmuteSystemVolume();
+                        return;
+                    case Keys.PageUp when e.Control:
+                        RaiseAppVolume();
+                        return;
+                    case Keys.PageUp:
+                        RaiseSystemVolume();
+                        return;
+                    case Keys.PageDown when e.Control:
+                        LowerAppVolume();
+                        return;
+                    case Keys.PageDown:
+                        LowerSystemVolume();
+                        return;
                 }
-
-                e.Handled = true;
-                e.SuppressKeyPress = true;
-                decimalIsUnused = false;
             };
-
-            Hook.GlobalEvents().KeyUp += (sender, e) =>
-                {
-                    switch (e.KeyCode)
-                    {
-                        case Keys.Decimal:
-                        case Keys.Delete:
-                            {
-
-                                decimalIsDown = false;
-                                if (!decimalIsUnused)
-                                {
-                                    e.Handled = true;
-                                    e.SuppressKeyPress = true;
-                                    return;
-                                }
-                                break;
-                            }
-                    }
-                };
         }
 
         private void ExecuteDependingOnControlKey(bool controlIsActive, Action actionWithControl, Action actionWithoutControl)
@@ -127,6 +91,7 @@ namespace StreamsMaster
         }
         private void MuteUnmuteSystemVolume()
         {
+
             _volumeService.MuteUnmuteSystemVolume();
         }
 
